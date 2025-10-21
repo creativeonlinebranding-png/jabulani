@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>PJ Powers – Jabulani (Karaoke Demo)</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: radial-gradient(circle at center, #000 40%, #111);
+      color: #fff;
+      text-align: center;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      font-size: 28px;
+      color: gold;
+      text-shadow: 0 0 15px orange;
+      margin-top: 10px;
+    }
+    audio {
+      width: 80%;
+      margin: 20px auto;
+      display: block;
+    }
+    #lyrics {
+      margin-top: 40px;
+      font-size: 22px;
+      line-height: 1.6;
+    }
+    #lyrics p {
+      opacity: 0.4;
+      transition: all 0.3s ease;
+    }
+    #lyrics p.active {
+      color: gold;
+      font-weight: bold;
+      opacity: 1;
+      text-shadow: 0 0 15px gold, 0 0 25px orange;
+      transform: scale(1.1);
+    }
+    #visualizer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 3px;
+      opacity: 0.6;
+      z-index: -1;
+    }
+    .bar {
+      flex: 1;
+      height: 20px;
+      border-radius: 4px;
+      background: linear-gradient(to top, orange, gold, white);
+      transition: height 0.15s ease;
+    }
+    .stage-light {
+      position: fixed;
+      top: 0;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,200,0.4), transparent 80%);
+      animation: lightMove 4s infinite alternate;
+      z-index: -1;
+    }
+    .light1 { left: 10%; animation-delay: 0s; }
+    .light2 { left: 60%; animation-delay: 2s; }
+    @keyframes lightMove {
+      0% { transform: translate(0,0) rotate(0deg); }
+      100% { transform: translate(40px, 40px) rotate(45deg); }
+    }
+  </style>
+</head>
+<body>
+
+<h1>🎤 PJ Powers – Jabulani (Karaoke)</h1>
+  <audio id="audio" controls>
+    <source src="jabulani.mp3" type="audio/mpeg">
+    Your browser does not support the audio tag.
+  </audio>
+
+    Your browser does not support the audio tag.
+  </audio>
+
+  <div id="lyrics">
+    <p data-start="26" data-end="33">I've been playing in the rain – Jabulani</p>
+    <p data-start="36" data-end="43">I've been holding hands with you – Jabulani</p>
+    <p data-start="46" data-end="53">Jabulani – the people sing and dance</p>
+    <p data-start="54" data-end="57">Jabulani – there's always just a chance</p>
+    <p data-start="58" data-end="62">Jabulani – for you to find romance</p>
+    <p data-start="68" data-end="74">Yeah... Yeah... Yeah... Yeah... ye ye ye ye...</p>
+    <p data-start="78" data-end="84">Yeah... Yeah... Yeah... Yeah... ye ye ye ye...</p>
+    <p data-start="89" data-end="95">You've been dancing all night long – Jabulani</p>
+    <p data-start="99" data-end="105">You have made us feel so strong – Jabulani</p>
+    <p data-start="109" data-end="114">Jabulani – the people sing and dance – Jabulani</p>
+  </div>
+
+  <div id="visualizer"></div>
+  <div class="stage-light light1"></div>
+  <div class="stage-light light2"></div>
+
+  <script>
+    const audio = document.getElementById("audio");
+    const lines = document.querySelectorAll("#lyrics p");
+    const visualizer = document.getElementById("visualizer");
+
+    // build bars
+    for (let i = 0; i < 40; i++) {
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      visualizer.appendChild(bar);
+    }
+    const bars = document.querySelectorAll(".bar");
+
+    // audio visualizer
+    let ctx, analyser, src, dataArray;
+    audio.onplay = () => {
+      if (!ctx) {
+        ctx = new AudioContext();
+        src = ctx.createMediaElementSource(audio);
+        analyser = ctx.createAnalyser();
+        src.connect(analyser);
+        analyser.connect(ctx.destination);
+        analyser.fftSize = 128;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+        animateBars();
+      }
+      if (ctx.state === "suspended") ctx.resume();
+    };
+
+    function animateBars() {
+      requestAnimationFrame(animateBars);
+      if (!analyser) return;
+      analyser.getByteFrequencyData(dataArray);
+      bars.forEach((bar, i) => bar.style.height = (dataArray[i] / 2) + "px");
+    }
+
+    // lyric sync
+    audio.addEventListener("timeupdate", () => {
+      const current = audio.currentTime;
+      lines.forEach(line => {
+        const start = parseFloat(line.dataset.start);
+        const end = parseFloat(line.dataset.end);
+        line.classList.toggle("active", current >= start && current <= end);
+      });
+    });
+  </script>
+</body>
+</html>
